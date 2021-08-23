@@ -14,7 +14,7 @@ The script will then copy and compress the whole directory from source to destin
 
 # Ordered list of action items
 ## MVP
-- [ ] Create test folder with directory and csv for src and dst
+- [x] Create test folder with directory and csv for src and dst
 - [ ] Load csv with backup instructions and loop over it
 - [ ] check if src exists else break
 - [ ] check if dst exists else create
@@ -22,7 +22,6 @@ The script will then copy and compress the whole directory from source to destin
 - [ ] setup function to copy directory
 - [ ] include compression in copy function
 - [ ] search src directory to check what needs to be copied
-- [ ] setup loop for csv and its directories
 
 ## Full Solution
 - [ ] make sure, script is working with windows and linux
