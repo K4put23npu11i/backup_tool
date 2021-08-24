@@ -62,9 +62,47 @@ def read_backup_instructions(path: str, file: str):
         return None
 
 
+def check_and_setup_directories(index: int, src: str, dst: str):
+    valid_src, valid_dst = None, None
+    # check src directory
+    valid_src = os.path.exists(src)
+
+    if valid_src is False:
+        logger.error(f"Source directory does not exists! ({src})")
+        print(f"Given source does not exist. No backup possible. ({src})")
+        return valid_src, valid_dst
+
+    # adapt dst path and check / create it
+    today_str = datetime.now().strftime(f'%Y_%m_%d_backup_idx_{str(index)}')
+    dst = os.path.join(dst, today_str)
+    valid_dst = os.path.exists(dst)
+
+    if valid_dst is False:
+        os.makedirs(dst)
+        logger.debug(f"Destination created: {dst}")
+    valid_src, valid_dst = src, dst
+    logger.debug(f"Source and Destination are valid.")
+    return valid_src, valid_dst
+
+
+def perform_backup(src: str, dst: str):
+    print("Something missing here...")
+
+
 def main():
     backup_instr_pd = read_backup_instructions(path=instructions_foldername, file=instructions_filename)
-    print(backup_instr_pd)
+
+    if backup_instr_pd is None:
+        return None
+    else:
+        for idx, row in backup_instr_pd.iterrows():
+            logger.debug(f"Processing idx: {idx} with values: {row}")
+            source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
+
+            if source is None or destination is None:
+                continue
+            else:
+                perform_backup(src=source, dst=destination)
 
 
 if __name__ == "__main__":

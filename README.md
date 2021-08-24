@@ -5,7 +5,7 @@
 | Titel | Backup Tool |
 | Short Description | Tool for creating backups of directories |
 | Start Date | 17.08.2021 |
-| Working Time | 5hours |
+| Working Time | 5.5 hours |
 | Link to Git | [Link to Git](https://github.com/K4put23npu11i/backup_tool.git "Repo Link") |
 
 # Detailed Description of project and its goals
@@ -15,10 +15,10 @@ The script will then copy and compress the whole directory from source to destin
 # Ordered list of action items
 ## MVP
 - [x] Create test folder with directory and csv for src and dst
-- [ ] Load csv with backup instructions and loop over it
-- [ ] check if src exists else break
-- [ ] check if dst exists else create
-- [ ] create specific folder in dst with current date
+- [x] Load csv with backup instructions and loop over it
+- [x] check if src exists else break
+- [x] check if dst exists else create
+- [x] create specific folder in dst with current date
 - [ ] setup function to copy directory
 - [ ] include compression in copy function
 - [ ] search src directory to check what needs to be copied
