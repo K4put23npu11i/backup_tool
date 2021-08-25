@@ -22,11 +22,16 @@ if not os.path.exists(basepath):
     os.makedirs(basepath)
 fh = logging.FileHandler(f'{basepath}/{filename}', mode='w')
 fh.setLevel(logging.DEBUG)
+sh = logging.StreamHandler()
+fh.setLevel(logging.DEBUG)
 
 # create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(levelname)s [%(module)s]: %(message)s', "%Y-%m-%d %H:%M:%S")
+formatter = logging.Formatter("%(asctime)s - %(levelname)s [%(module)s - %(funcName)s()]: %(message)s",
+                              "%Y-%m-%d %H:%M:%S")
 fh.setFormatter(formatter)
 logger.addHandler(fh)
+sh.setFormatter(formatter)
+# logger.addHandler(sh)
 logger.setLevel(logging.DEBUG)
 
 
@@ -63,6 +68,25 @@ def read_backup_instructions(path: str, file: str):
 
 
 def check_and_setup_directories(index: int, src: str, dst: str):
+    """
+    Checks if directories exists, create dir for destination if not already exists.
+
+    Parameters
+    ----------
+    index: int
+        index of backup instruction file
+    src: str
+        path to source folder
+    dst: str
+        path to destination folder
+
+    Returns
+    -------
+    valid_src: bool
+        Indicator if source path is valid and available
+    valid_dst: bool
+        Indicator if destination path is valid and available
+    """
     valid_src, valid_dst = None, None
     # check src directory
     valid_src = os.path.exists(src)
