@@ -19,7 +19,7 @@ The script will then copy and compress the whole directory from source to destin
 - [x] check if src exists else break
 - [x] check if dst exists else create
 - [x] create specific folder in dst with current date
-- [ ] setup function to copy directory
+- [x] setup function to copy directory
 - [ ] include compression in copy function
 - [ ] search src directory to check what needs to be copied
 
@@ -35,6 +35,7 @@ The script will then copy and compress the whole directory from source to destin
 - create gui with tkinter
 - create standalone exe
 - include in autostart of PC for partial backup only
+- delete "old" backups automatically
 
 
 # Documentation

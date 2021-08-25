@@ -11,6 +11,7 @@ import shutil
 import pandas as pd
 import logging
 from datetime import datetime
+import restore_test_data_to_original_state
 
 # Configure logging
 logger = logging.getLogger()
@@ -109,8 +110,39 @@ def check_and_setup_directories(index: int, src: str, dst: str):
     return valid_src, valid_dst
 
 
+def backup_items_from_src_to_dst(src: str, dst: str, items: list):
+    for item in items:
+        logger.debug(f"Backup file {item} from src ({src}) to dst ({dst})")
+        src_item = os.path.join(src, item)
+        dst_item = os.path.join(dst, item)
+        if os.path.isfile(src_item):
+            shutil.copyfile(src_item, dst_item)
+            logger.debug(f"Backup file {item} from src ({src}) to dst ({dst}) done.")
+        elif os.path.isdir(src_item):
+            shutil.copytree(src_item, dst_item)
+            logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done.")
+        else:
+            logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
+
+
 def perform_backup(src: str, dst: str):
-    print("Something missing here...")
+    dir_content = os.listdir(src)
+    files, folders = [], []
+
+    for content in dir_content:
+        logger.debug(content)
+        if os.path.isfile(os.path.join(src, content)):
+            files.append(content)
+        if os.path.isdir(os.path.join(src, content)):
+            folders.append(content)
+    logger.debug(f"Found {len(files)} files in src: {files}")
+    logger.debug(f"Found {len(folders)} folders in src: {folders}")
+
+    if len(files) > 0:
+        backup_items_from_src_to_dst(src=src, dst=dst, items=files)
+
+    if len(folders) > 0:
+        backup_items_from_src_to_dst(src=src, dst=dst, items=folders)
 
 
 def main():
@@ -130,4 +162,5 @@ def main():
 
 
 if __name__ == "__main__":
+    restore_test_data_to_original_state.main()  # Only for testing purposes
     main()

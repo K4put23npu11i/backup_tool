@@ -9,11 +9,19 @@ Script to delete test backup folder and recreate it. For testing purposes only
 import os
 import shutil
 
-cwd = os.getcwd()
 
-backup_folder_path = os.path.join(cwd, "data", "backup")
+def main():
+    cwd = os.getcwd()
 
-if os.path.exists(backup_folder_path):
-    shutil.rmtree(backup_folder_path)
+    backup_folder_path = os.path.join(cwd, "data", "backup")
 
-os.mkdir(backup_folder_path)
+    if os.path.exists(backup_folder_path):
+        shutil.rmtree(backup_folder_path)
+
+    os.mkdir(backup_folder_path)
+
+    print("Restore done.")
+
+
+if __name__ == "__main__":
+    main()
