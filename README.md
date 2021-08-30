@@ -5,7 +5,7 @@
 | Titel | Backup Tool |
 | Short Description | Tool for creating backups of directories |
 | Start Date | 17.08.2021 |
-| Working Time | 5.5 hours |
+| Working Time | 6 hours |
 | Link to Git | [Link to Git](https://github.com/K4put23npu11i/backup_tool.git "Repo Link") |
 
 # Detailed Description of project and its goals
@@ -36,6 +36,7 @@ The script will then copy and compress the whole directory from source to destin
 - create standalone exe
 - include in autostart of PC for partial backup only
 - delete "old" backups automatically
+- include ordering from small files/folder to big files/folders
 
 
 # Documentation

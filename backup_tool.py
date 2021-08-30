@@ -112,15 +112,19 @@ def check_and_setup_directories(index: int, src: str, dst: str):
 
 def backup_items_from_src_to_dst(src: str, dst: str, items: list):
     for item in items:
-        logger.debug(f"Backup file {item} from src ({src}) to dst ({dst})")
+        # print(f"Processing item {item} from src ({src}) to dst ({dst})")
+        logger.debug(f"Processing item {item} from src ({src}) to dst ({dst})")
         src_item = os.path.join(src, item)
         dst_item = os.path.join(dst, item)
+        start_time = datetime.now()
         if os.path.isfile(src_item):
             shutil.copyfile(src_item, dst_item)
-            logger.debug(f"Backup file {item} from src ({src}) to dst ({dst}) done.")
+            done_time = datetime.now()
+            logger.debug(f"Backup file {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         elif os.path.isdir(src_item):
             shutil.copytree(src_item, dst_item)
-            logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done.")
+            done_time = datetime.now()
+            logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         else:
             logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
 
@@ -130,13 +134,13 @@ def perform_backup(src: str, dst: str):
     files, folders = [], []
 
     for content in dir_content:
-        logger.debug(content)
+        logger.debug(f"Looping content of dir. Current content is: {content}")
         if os.path.isfile(os.path.join(src, content)):
             files.append(content)
         if os.path.isdir(os.path.join(src, content)):
             folders.append(content)
-    logger.debug(f"Found {len(files)} files in src: {files}")
-    logger.debug(f"Found {len(folders)} folders in src: {folders}")
+    logger.debug(f"Found {len(files)} files in total in src: {files}")
+    logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     if len(files) > 0:
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
