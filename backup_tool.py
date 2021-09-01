@@ -11,6 +11,8 @@ import shutil
 import pandas as pd
 import logging
 from datetime import datetime
+import zipfile
+import gzip
 import restore_test_data_to_original_state
 
 # Configure logging
@@ -110,9 +112,35 @@ def check_and_setup_directories(index: int, src: str, dst: str):
     return valid_src, valid_dst
 
 
-def backup_items_from_src_to_dst(src: str, dst: str, items: list):
+def backup_folder_with_zipfile_method(src: str, dst: str):
+    """
+
+    Parameters
+    ----------
+    src
+    dst
+
+    Returns
+    -------
+
+    """
+    dst = dst + ".zip"
+    print(dst)
+    zip_file = zipfile.ZipFile(str(dst), mode='w')
+
+    for root, dirs, files in os.walk(src):
+        for file in files:
+            zip_file.write(os.path.join(root, file),
+                           os.path.relpath(os.path.join(root, file),
+                                           os.path.join(src, '..')),
+                           compress_type=zipfile.ZIP_DEFLATED)
+
+    zip_file.close()
+
+
+def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: str = None):
     for item in items:
-        # print(f"Processing item {item} from src ({src}) to dst ({dst})")
+        print(f"Processing item <{item}> from src ({src}) to dst ({dst})")
         logger.debug(f"Processing item {item} from src ({src}) to dst ({dst})")
         src_item = os.path.join(src, item)
         dst_item = os.path.join(dst, item)
@@ -122,7 +150,15 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list):
             done_time = datetime.now()
             logger.debug(f"Backup file {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         elif os.path.isdir(src_item):
-            shutil.copytree(src_item, dst_item)
+            if compression == "ZIPFILE":
+                logger.debug(f"Copy and compress with ZIP")
+                backup_folder_with_zipfile_method(src=src_item, dst=dst_item)
+            elif compression == "shutil.make_archive":
+                logger.debug(f"Copy and compress with shutil.make_archive")
+                shutil.make_archive(dst_item, "zip", src_item)
+            else:
+                logger.debug(f"Copy and with NO compression")
+                shutil.copytree(src_item, dst_item)
             done_time = datetime.now()
             logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         else:
@@ -146,7 +182,9 @@ def perform_backup(src: str, dst: str):
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
 
     if len(folders) > 0:
-        backup_items_from_src_to_dst(src=src, dst=dst, items=folders)
+        # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="ZIPFILE")
+        # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="TAR")
+        backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
 
 
 def main():

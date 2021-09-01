@@ -20,8 +20,7 @@ The script will then copy and compress the whole directory from source to destin
 - [x] check if dst exists else create
 - [x] create specific folder in dst with current date
 - [x] setup function to copy directory
-- [ ] include compression in copy function
-- [ ] search src directory to check what needs to be copied
+- [x] include compression in copy function
 
 ## Full Solution
 - [ ] make sure, script is working with windows and linux
