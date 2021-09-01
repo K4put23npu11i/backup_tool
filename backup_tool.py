@@ -165,6 +165,32 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
             logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
 
 
+def get_dir_size(path: str):
+    """
+    Walks given path and calculates the complete size of the directory
+
+    Parameters
+    ----------
+    path: str
+        Path to directory
+
+    Returns
+    -------
+    total_size: int
+        Size of given Path in bytes
+    """
+    total_size = 0
+
+    for dirpath, dirnames, filenames in os.walk(path):
+        for i in filenames:
+            # use join to concatenate all the components of path
+            f = os.path.join(dirpath, i)
+
+            # use getsize to generate size in bytes and add it to the total size
+            total_size += os.path.getsize(f)
+    return total_size
+
+
 def perform_backup(src: str, dst: str):
     dir_content = os.listdir(src)
     files, folders = [], []
@@ -179,9 +205,11 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     if len(files) > 0:
+        files.sort(key=lambda f: os.stat(os.path.join(src, f)).st_size, reverse=False)  # sort from small to big
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
 
     if len(folders) > 0:
+        folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="ZIPFILE")
         # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="TAR")
         backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
