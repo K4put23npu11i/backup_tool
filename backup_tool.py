@@ -11,6 +11,7 @@ import shutil
 import pandas as pd
 import logging
 from datetime import datetime
+import json
 import zipfile
 import gzip
 import restore_test_data_to_original_state
@@ -216,6 +217,39 @@ def get_dir_size(path: str):
     return total_size
 
 
+def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: str):
+    """
+    Loops given list of items located in src. Collects some property information and writes everything to a info dict
+
+    Parameters
+    ----------
+    inf_dict: dict
+        collection of information about backup process
+    src: str
+        path to directory where items are located
+    items: list
+        list of files/folders located in src
+    prefix: str
+        indicator for files or folder
+
+    Returns
+    -------
+    inf_dict: dict
+        adjusted collection of information about backup process
+    """
+    items_info = []
+    for item in items:
+        item_info = {
+            f"{prefix}_name": item,
+            f"{prefix}_size": get_dir_size(path=os.path.join(src, item)),
+            f"{prefix}_hash": "dummy"
+            }
+        items_info.append(item_info)
+
+    inf_dict[f"found_{prefix}s"] = items_info
+    return inf_dict
+
+
 def perform_backup(src: str, dst: str):
     """
     Performs a backup from src directory to destination directory. Collection of function calls
@@ -229,6 +263,12 @@ def perform_backup(src: str, dst: str):
     """
     dir_content = os.listdir(src)
     files, folders = [], []
+    info_dict = {
+        "start_time": datetime.now().strftime('%Y%m%d_%H%M%S'),
+        "end_time": "",
+        "source_path": src,
+        "destination_path": dst
+    }
 
     for content in dir_content:
         logger.debug(f"Looping content of dir. Current content is: {content}")
@@ -241,12 +281,25 @@ def perform_backup(src: str, dst: str):
 
     if len(files) > 0:
         files.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
+        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=files, prefix="file")
+
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
 
     if len(folders) > 0:
         folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
+        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=folders, prefix="folder")
+
         # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="ZIPFILE")
         backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
+
+    # write information to dst folder
+    logger.debug("Start writing backup information to disk")
+    info_dict["end_time"] = datetime.now().strftime('%Y%m%d_%H%M%S')
+    file_content_txt = json.dumps(info_dict, indent=4)
+    file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_backup_information.txt"
+    with open(os.path.join(dst, file_name), "w") as file:
+        file.write(file_content_txt)
+    logger.debug(f"Backup information written to {file_name}")
 
 
 def main():
