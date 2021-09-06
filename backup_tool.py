@@ -114,18 +114,21 @@ def check_and_setup_directories(index: int, src: str, dst: str):
 
 def backup_folder_with_zipfile_method(src: str, dst: str):
     """
+    Creates a compress folder and writes it to disc. Uses the zipfile library
 
     Parameters
     ----------
-    src
-    dst
-
-    Returns
-    -------
-
+    src: str
+        path to directory to be compressed
+    dst: str
+        path to directory where the zip file should be written to
     """
-    dst = dst + ".zip"
-    print(dst)
+    if dst.endswith(".zip"):
+        pass
+    else:
+        dst = dst + ".zip"
+        logger.debug(f"Adjust dst with '.zip' ending. dst is now: {dst}")
+
     zip_file = zipfile.ZipFile(str(dst), mode='w')
 
     for root, dirs, files in os.walk(src):
@@ -139,6 +142,20 @@ def backup_folder_with_zipfile_method(src: str, dst: str):
 
 
 def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: str = None):
+    """
+    Loops given items list and backup them from source to destination. Decide with compression about method.
+
+    Parameters
+    ----------
+    src: str
+        path where items are located
+    dst: str
+        path where backup should be stored
+    items: list
+        list of files/folders to be backuped
+    compression: str
+        indicator which compression method should be used
+    """
     for item in items:
         print(f"Processing item <{item}> from src ({src}) to dst ({dst})")
         logger.debug(f"Processing item {item} from src ({src}) to dst ({dst})")
@@ -157,17 +174,18 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
                 logger.debug(f"Copy and compress with shutil.make_archive")
                 shutil.make_archive(dst_item, "zip", src_item)
             else:
-                logger.debug(f"Copy and with NO compression")
+                logger.debug(f"Copy with NO compression")
                 shutil.copytree(src_item, dst_item)
             done_time = datetime.now()
             logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         else:
             logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
+            raise Exception(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
 
 
 def get_dir_size(path: str):
     """
-    Walks given path and calculates the complete size of the directory
+    Walks given path and calculates the complete size of the directory or calculates size directly if path is a file
 
     Parameters
     ----------
@@ -181,17 +199,34 @@ def get_dir_size(path: str):
     """
     total_size = 0
 
-    for dirpath, dirnames, filenames in os.walk(path):
-        for i in filenames:
-            # use join to concatenate all the components of path
-            f = os.path.join(dirpath, i)
+    if os.path.isdir(path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            for i in filenames:
+                # use join to concatenate all the components of path
+                f = os.path.join(dirpath, i)
 
-            # use getsize to generate size in bytes and add it to the total size
-            total_size += os.path.getsize(f)
+                # use getsize to generate size in bytes and add it to the total size
+                total_size += os.path.getsize(f)
+
+    elif os.path.isfile(path):
+        total_size = os.path.getsize(path)
+    else:
+        raise Exception("Should not be reached!!")
+
     return total_size
 
 
 def perform_backup(src: str, dst: str):
+    """
+    Performs a backup from src directory to destination directory. Collection of function calls
+
+    Parameters
+    ----------
+    src: str
+        path to source directory of backup
+    dst: str
+        path to destination directory of backup
+    """
     dir_content = os.listdir(src)
     files, folders = [], []
 
@@ -205,13 +240,12 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     if len(files) > 0:
-        files.sort(key=lambda f: os.stat(os.path.join(src, f)).st_size, reverse=False)  # sort from small to big
+        files.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
 
     if len(folders) > 0:
         folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="ZIPFILE")
-        # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="TAR")
         backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
 
 
