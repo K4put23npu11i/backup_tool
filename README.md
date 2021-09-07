@@ -5,7 +5,7 @@
 | Titel | Backup Tool |
 | Short Description | Tool for creating backups of directories |
 | Start Date | 17.08.2021 |
-| Working Time | 6.75 hours |
+| Working Time | 7 hours |
 | Link to Git | [Link to Git](https://github.com/K4put23npu11i/backup_tool.git "Repo Link") |
 
 # Detailed Description of project and its goals
@@ -30,12 +30,28 @@ The script will then copy and compress the whole directory from source to destin
 - [ ] create hash of src directory (or its folders); include in info file or create own
 - [ ] include possibility to shutdown PC after backup is finished
 
+## Planned process
+1. Check backup instructions. If not valid exit script
+2. Loop existing instructions
+3. Analyse existing backups. 
+If x backups available, delete the oldest. 
+Load latest info_dict from latest backup if available.
+4. Analyse current source folder.
+Split up in files and folders
+create info_dict from source and use latest info_dict for backup decision
+5. Perform actual backup.
+Create new backup if changes since last time or no previous backup available. 
+(Decision in previous analyse)
+Start with files than folders.
+6. Copy existing backup to new folder if no changes happened
+
 # Collection of ideas
 - only partial backup (compare hashes and only backup the directories that changed)
 - create gui with tkinter
 - create standalone exe
 - include in autostart of PC for partial backup only
 - delete "old" backups automatically
+- include some kind of timing or progress bars
 
 
 
