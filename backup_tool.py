@@ -86,10 +86,10 @@ def check_and_setup_directories(index: int, src: str, dst: str):
 
     Returns
     -------
-    valid_src: bool
-        Indicator if source path is valid and available
-    valid_dst: bool
-        Indicator if destination path is valid and available
+    src: str
+        path to source folder, None if not existing
+    dst: str
+        adjusted path to destination folder, None if src not existing
     """
     valid_src, valid_dst = None, None
     # check src directory
@@ -108,9 +108,8 @@ def check_and_setup_directories(index: int, src: str, dst: str):
     if valid_dst is False:
         os.makedirs(dst)
         logger.debug(f"Destination created: {dst}")
-    valid_src, valid_dst = src, dst
     logger.debug(f"Source and Destination are valid.")
-    return valid_src, valid_dst
+    return src, dst
 
 
 def backup_folder_with_zipfile_method(src: str, dst: str):
