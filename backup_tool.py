@@ -301,6 +301,78 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Backup information written to {file_name}")
 
 
+def load_info_dict_from_backup_folder(folder_path: str):
+    """
+    Returns loaded dict file with constant file name from given path
+
+    Parameters
+    ----------
+    folder_path: str
+        Path to backup folder
+
+    Returns
+    -------
+    dict: dict
+        loaded dictionary from folder path
+    """
+    dict = None
+    # ToDO: Content for loading info dict still missing
+    return dict
+
+
+def analyze_existing_backups(backup_path: str, max_num_backups: int = 3):
+    """
+    Analyzes the given path for backups and delete existing backups if more than given number exists and loads the
+    information dictionary about the latest backup.
+
+    Parameters
+    ----------
+    backup_path: str
+        path to folder where backups get stored
+    max_num_backups: int
+        Limit of existing backups
+
+    Returns
+    -------
+    latest_backup_dict: dict
+
+    """
+    latest_backup_dict = None
+
+    if os.path.exists(backup_path) and os.path.isdir(backup_path):
+        folder_content = os.listdir(backup_path)
+        if len(folder_content) > 0:
+            backup_folders = []
+            for f in folder_content:
+                f_path = os.path.join(backup_path, f)
+                logger.debug(f"Checking file/folder {f}")
+                if os.path.isdir(f_path) and "backup" in f:
+                    backup_folders.append(f)
+
+            sorted_backup_folders = sorted(backup_folders, reverse=True)
+            logger.debug(f"Found {len(sorted_backup_folders)} folders.")
+            logger.debug(f"backup_folders: {sorted_backup_folders}")
+
+            # delete backups if too many exist
+            while len(sorted_backup_folders) >= max_num_backups:
+                folder_to_delete = sorted_backup_folders.pop()
+                logger.debug(f"folder_to_delete: {folder_to_delete}")
+                shutil.rmtree(os.path.join(backup_path, folder_to_delete))
+
+            # load latest info dict
+            if len(sorted_backup_folders) > 0:
+                still_existing_backups = sorted(sorted_backup_folders, reverse=True)
+                backup_folder_path = os.path.join(backup_path, still_existing_backups[0])
+                logger.debug(f"Latest backup folder path: {backup_folder_path}")
+                latest_backup_dict = load_info_dict_from_backup_folder(folder_path=backup_folder_path)
+
+    else:
+        print("Could not load info about latest backup. Either no backup exists or given path is invalid.")
+        logger.debug(f"Either no backup exists or given path is invalid. ({backup_path})")
+
+    return latest_backup_dict
+
+
 def main():
     backup_instr_pd = read_backup_instructions(path=instructions_foldername, file=instructions_filename)
 
@@ -309,6 +381,9 @@ def main():
     else:
         for idx, row in backup_instr_pd.iterrows():
             logger.debug(f"Processing idx: {idx} with values: {row}")
+
+            latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
+
             source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
 
             if source is None or destination is None:
@@ -318,5 +393,4 @@ def main():
 
 
 if __name__ == "__main__":
-    restore_test_data_to_original_state.main()  # Only for testing purposes
     main()

@@ -5,7 +5,7 @@
 | Titel | Backup Tool |
 | Short Description | Tool for creating backups of directories |
 | Start Date | 17.08.2021 |
-| Working Time | 7 hours |
+| Working Time | 7,5 hours |
 | Link to Git | [Link to Git](https://github.com/K4put23npu11i/backup_tool.git "Repo Link") |
 
 # Detailed Description of project and its goals
@@ -25,6 +25,7 @@ The script will then copy and compress the whole directory from source to destin
 ## Full Solution
 - [x] include ordering from small files/folder to big files/folders
 - [x] add information file with time, src, dst
+- [x] delete "old" backups automatically
 - [ ] make sure, script is working with windows and linux
 - [ ] include sth. to do the backup of multiple folders in parallel
 - [ ] create hash of src directory (or its folders); include in info file or create own
@@ -50,7 +51,6 @@ Start with files than folders.
 - create gui with tkinter
 - create standalone exe
 - include in autostart of PC for partial backup only
-- delete "old" backups automatically
 - include some kind of timing or progress bars
 
 
