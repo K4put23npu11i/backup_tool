@@ -105,9 +105,12 @@ def check_and_setup_directories(index: int, src: str, dst: str):
     dst = os.path.join(dst, today_str)
     valid_dst = os.path.exists(dst)
 
-    if valid_dst is False:
-        os.makedirs(dst)
-        logger.debug(f"Destination created: {dst}")
+    if valid_dst is True:
+        logger.debug(f"Destination already existing. Delete now")
+        shutil.rmtree(dst)
+
+    os.makedirs(dst)
+    logger.debug(f"Destination created: {dst}")
     logger.debug(f"Source and Destination are valid.")
     return src, dst
 
@@ -316,7 +319,24 @@ def load_info_dict_from_backup_folder(folder_path: str):
         loaded dictionary from folder path
     """
     dict = None
-    # ToDO: Content for loading info dict still missing
+
+    folder_cont = os.listdir(folder_path)
+    backup_file_name = ""
+    logger.debug(f"Loop path content to find backup_information file.")
+    for entry in folder_cont:
+        entry_path = os.path.join(folder_path, entry)
+        if os.path.isfile(entry_path) and "backup_information" in entry:
+            backup_file_name = entry
+
+    if backup_file_name == "":
+        logger.error("File could not be found. Return None")
+        return None
+
+    # Load file
+    with open(os.path.join(folder_path, backup_file_name), 'r', encoding='utf-8') as f:
+        dict = json.load(f)
+    logger.debug(f"Content of latest backup info file: {dict}")
+
     return dict
 
 
