@@ -28,7 +28,7 @@ The script will then copy and compress the whole directory from source to destin
 - [x] delete "old" backups automatically
 - [ ] make sure, script is working with windows and linux
 - [ ] include sth. to do the backup of multiple folders in parallel
-- [ ] create hash of src directory (or its folders); include in info file or create own
+- [x] create hash of src directory (or its folders); include in info file or create own
 - [ ] include possibility to shutdown PC after backup is finished
 
 ## Planned process

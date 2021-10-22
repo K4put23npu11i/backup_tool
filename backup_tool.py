@@ -14,6 +14,8 @@ from datetime import datetime
 import json
 import zipfile
 import gzip
+from checksumdir import dirhash
+import hashlib
 import restore_test_data_to_original_state
 
 # Configure logging
@@ -219,6 +221,67 @@ def get_dir_size(path: str):
     return total_size
 
 
+def build_checksum_of_directory(dir: str, ex_files: list = [], ex_ext: list = [], hash_func: str = 'sha256'):
+    """
+    Builds a checksum of the given directory to check for changes. Uses https://pypi.org/project/checksumdir/
+
+    Parameters
+    ----------
+    dir: str
+        directory to create hash of
+    ex_files: list
+        list of files to be excluded of the hash creation
+    ex_ext:
+        list of file extensions to be excluded from the hash creation
+    hash_func: str
+        method of hash algorithm
+
+    Returns
+    -------
+    hash: str
+        hash string of given directory
+    """
+    allowed_hash_functions = ['md5', 'sha1', 'sha256']  # fast, but "insecure" --> slow but more secure
+
+    if os.path.exists(dir) and hash_func in allowed_hash_functions:
+        hash = dirhash(dir, hash_func, excluded_files=ex_files, excluded_extensions=ex_ext)
+        return hash
+    else:
+        return None
+
+
+def build_hash_of_file(filepath: str, hash_func: str = 'sha256'):
+    """
+    Returns a hash string of given file with hashlib
+
+    Parameters
+    ----------
+    filepath: str
+        path to file to be hashed
+    hash_func: str
+        indicator for hash function to be used. one of ['md5', 'sha1', 'sha256']
+
+    Returns
+    -------
+    hash: str
+        hexdigest of created file hash as string
+    """
+    allowed_hash_functions = ['md5', 'sha1', 'sha256']  # fast, but "insecure" --> slow but more secure
+    buf_size = 65536
+
+    if os.path.exists(filepath) and os.path.isfile(filepath) and hash_func in allowed_hash_functions:
+        hash = eval("hashlib." + hash_func + "()")
+        with open(filepath, 'rb') as f:
+            while True:
+                data = f.read(buf_size)
+                if not data:
+                    break
+                hash.update(data)
+        return hash.hexdigest()
+    else:
+        return None
+
+
 def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: str):
     """
     Loops given list of items located in src. Collects some property information and writes everything to a info dict
@@ -241,10 +304,18 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
     """
     items_info = []
     for item in items:
+
+        if prefix == "file":
+            hash = build_hash_of_file(filepath=os.path.join(src, item), hash_func="md5")
+        elif prefix == "folder":
+            hash = build_checksum_of_directory(dir=os.path.join(src, item), hash_func='md5')
+        else:
+            hash = None
+
         item_info = {
             f"{prefix}_name": item,
             f"{prefix}_size": get_dir_size(path=os.path.join(src, item)),
-            f"{prefix}_hash": "dummy"
+            f"{prefix}_hash": hash
             }
         items_info.append(item_info)
 
