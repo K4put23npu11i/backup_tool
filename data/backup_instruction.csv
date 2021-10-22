@@ -1,2 +1,2 @@
-﻿source;destination;system
-data/folder_to_backup;data/backup;windows
+﻿source;destination;system;strategy;shutdown
+data/folder_to_backup;data/backup;windows;full;True

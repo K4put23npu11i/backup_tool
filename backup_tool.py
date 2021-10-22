@@ -11,6 +11,7 @@ import shutil
 import pandas as pd
 import logging
 from datetime import datetime
+import time
 import json
 import zipfile
 import gzip
@@ -314,7 +315,7 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
 
         item_info = {
             f"{prefix}_name": item,
-            f"{prefix}_size": get_dir_size(path=os.path.join(src, item)),
+            f"{prefix}_size_in_bytes": get_dir_size(path=os.path.join(src, item)),
             f"{prefix}_hash": hash
             }
         items_info.append(item_info)
@@ -464,6 +465,47 @@ def analyze_existing_backups(backup_path: str, max_num_backups: int = 3):
     return latest_backup_dict
 
 
+def check_for_shutdown(instr):
+    logger.debug(f"Start shutdown method now")
+    shutdown_list = []
+    for idx, row in instr.iterrows():
+        shut = bool(row["shutdown"])
+        shutdown_list.append(shut)
+
+    if all(shutdown_list):
+        logger.debug(f"All entries in backup instructions show shutdown. Will perform shutdown now.")
+        wait_for_shutdown(waittime=120)
+    else:
+        logger.debug(f"NOT all entries in backup instructions show shutdown. Will end script.")
+        print(f"\n\nNOT all entries in backup instructions show shutdown. Will end script.")
+
+
+def wait_for_shutdown(waittime: int):
+    print(f"\n\nScript is finished. Will shutdown PC in {waittime} seconds! Press CTRL + C to prevent that.")
+    waiting_list = [waittime, int(waittime * 0.5), int(waittime * 0.75), int(waittime * 0.9), int(waittime * 0.95),
+                    int(waittime * 0.99), waittime]
+
+    try:
+        for idx, wait in enumerate(waiting_list):
+            # Print message
+            if wait == waittime and idx == 0:
+                print(f"\n\t{wait} seconds till shutdown...  Press CTRL + C to prevent that")
+            else:
+                print(f"\n\t{waittime - wait} seconds till shutdown...  Press CTRL + C to prevent that")
+
+            # Sleep
+            if idx < len(waiting_list) - 1:
+                time.sleep(waittime - waiting_list[idx + 1])
+            else:
+                time.sleep(2)
+
+        print("\nWill shutdown now!")
+        print("Uncomment the following line to shut down the PC!")
+        # os.system("shutdown /s /t 20")
+    except KeyboardInterrupt:
+        print("  Continue processing...")
+
+
 def main():
     main_start_time = datetime.now()
     logger.debug("Start of main function of backup script")
@@ -488,6 +530,8 @@ def main():
 
     end_time = datetime.now()
     logger.debug(f"Backup script is finished. Took {end_time - main_start_time}")
+    check_for_shutdown(instr=backup_instr_pd)
+
 
 if __name__ == "__main__":
     main()
