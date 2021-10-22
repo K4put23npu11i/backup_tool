@@ -162,15 +162,15 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
         indicator which compression method should be used
     """
     for item in items:
-        print(f"Processing item <{item}> from src ({src}) to dst ({dst})")
-        logger.debug(f"Processing item {item} from src ({src}) to dst ({dst})")
+        print(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
+        logger.debug(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
         src_item = os.path.join(src, item)
         dst_item = os.path.join(dst, item)
         start_time = datetime.now()
         if os.path.isfile(src_item):
             shutil.copyfile(src_item, dst_item)
             done_time = datetime.now()
-            logger.debug(f"Backup file {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
+            logger.debug(f"Backup file <{item}> from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         elif os.path.isdir(src_item):
             if compression == "ZIPFILE":
                 logger.debug(f"Copy and compress with ZIP")
@@ -182,7 +182,7 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
                 logger.debug(f"Copy with NO compression")
                 shutil.copytree(src_item, dst_item)
             done_time = datetime.now()
-            logger.debug(f"Backup folder {item} from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
+            logger.debug(f"Backup folder <{item}> from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         else:
             logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
             raise Exception(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
@@ -304,7 +304,7 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
     """
     items_info = []
     for item in items:
-
+        logger.debug(f"Append info_dict for {prefix} <{item}>")
         if prefix == "file":
             hash = build_hash_of_file(filepath=os.path.join(src, item), hash_func="md5")
         elif prefix == "folder":
@@ -344,7 +344,6 @@ def perform_backup(src: str, dst: str):
     }
 
     for content in dir_content:
-        logger.debug(f"Looping content of dir. Current content is: {content}")
         if os.path.isfile(os.path.join(src, content)):
             files.append(content)
         if os.path.isdir(os.path.join(src, content)):
@@ -353,12 +352,14 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     if len(files) > 0:
+        logger.debug("Start building info_dict for files and then backup them")
         files.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=files, prefix="file")
 
         backup_items_from_src_to_dst(src=src, dst=dst, items=files)
 
     if len(folders) > 0:
+        logger.debug("Start building info_dict for folders and then backup them")
         folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=folders, prefix="folder")
 
@@ -366,13 +367,13 @@ def perform_backup(src: str, dst: str):
         backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
 
     # write information to dst folder
-    logger.debug("Start writing backup information to disk")
+    logger.debug("Start writing backup info_dict to disk")
     info_dict["end_time"] = datetime.now().strftime('%Y%m%d_%H%M%S')
     file_content_txt = json.dumps(info_dict, indent=4)
     file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_backup_information.txt"
     with open(os.path.join(dst, file_name), "w") as file:
         file.write(file_content_txt)
-    logger.debug(f"Backup information written to {file_name}")
+    logger.debug(f"Backup info_dict written to {file_name}")
 
 
 def load_info_dict_from_backup_folder(folder_path: str):
@@ -389,7 +390,6 @@ def load_info_dict_from_backup_folder(folder_path: str):
     dict: dict
         loaded dictionary from folder path
     """
-    dict = None
 
     folder_cont = os.listdir(folder_path)
     backup_file_name = ""
@@ -465,13 +465,17 @@ def analyze_existing_backups(backup_path: str, max_num_backups: int = 3):
 
 
 def main():
+    main_start_time = datetime.now()
+    logger.debug("Start of main function of backup script")
     backup_instr_pd = read_backup_instructions(path=instructions_foldername, file=instructions_filename)
 
     if backup_instr_pd is None:
         return None
     else:
         for idx, row in backup_instr_pd.iterrows():
-            logger.debug(f"Processing idx: {idx} with values: {row}")
+            # logger.debug(f"Processing idx: {idx} with values: {row}")
+            for header in list(backup_instr_pd.columns):
+                logger.debug(f"Processing idx: {idx} with values: Header: {header}; Value: {row[header]}")
 
             latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
 
@@ -482,6 +486,8 @@ def main():
             else:
                 perform_backup(src=source, dst=destination)
 
+    end_time = datetime.now()
+    logger.debug(f"Backup script is finished. Took {end_time - main_start_time}")
 
 if __name__ == "__main__":
     main()
