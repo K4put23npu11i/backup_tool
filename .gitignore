@@ -1,6 +1,7 @@
 # Ignore big folder from example folder_to_backup
 data/folder_to_backup/big_folder
 data/backup
+data/folder_to_backup_big_folders/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

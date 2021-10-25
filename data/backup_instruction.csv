@@ -1,2 +1,3 @@
-﻿source;destination;system;strategy;shutdown
-data/folder_to_backup;data/backup;windows;full;True
+﻿activate;source;destination;strategy;shutdown
+True;data/folder_to_backup;data/backup;full;False
+False;data/folder_to_backup_big_folders;data/backup;full;False
