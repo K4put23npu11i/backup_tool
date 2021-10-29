@@ -354,6 +354,7 @@ def perform_backup(src: str, dst: str):
 
     if len(files) > 0:
         logger.debug("Start building info_dict for files and then backup them")
+        # ToDo: Move size calculation to one central place and pass information to only calculate size once!
         files.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=files, prefix="file")
 
@@ -361,6 +362,7 @@ def perform_backup(src: str, dst: str):
 
     if len(folders) > 0:
         logger.debug("Start building info_dict for folders and then backup them")
+        # ToDo: Move size calculation to one central place and pass information to only calculate size once!
         folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
         info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=folders, prefix="folder")
 
@@ -515,6 +517,7 @@ def main():
         return None
     else:
         for idx, row in backup_instr_pd.iterrows():
+            # ToDo: Check backup instructions for field 'activate'. Skip if False
             # logger.debug(f"Processing idx: {idx} with values: {row}")
             for header in list(backup_instr_pd.columns):
                 logger.debug(f"Processing idx: {idx} with values: Header: {header}; Value: {row[header]}")
