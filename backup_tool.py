@@ -517,19 +517,23 @@ def main():
         return None
     else:
         for idx, row in backup_instr_pd.iterrows():
-            # ToDo: Check backup instructions for field 'activate'. Skip if False
-            # logger.debug(f"Processing idx: {idx} with values: {row}")
             for header in list(backup_instr_pd.columns):
                 logger.debug(f"Processing idx: {idx} with values: Header: {header}; Value: {row[header]}")
 
-            latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
+            activation = bool(row["activate"])
+            if activation is True:
+                logger.debug(f"Value for activation: {activation}. Do the backup")
+                latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
 
-            source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
+                source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
 
-            if source is None or destination is None:
-                continue
+                if source is None or destination is None:
+                    continue
+                else:
+                    perform_backup(src=source, dst=destination)
+
             else:
-                perform_backup(src=source, dst=destination)
+                logger.debug(f"Value for activation: {activation}. Skip this row from backup instructions.")
 
     end_time = datetime.now()
     logger.debug(f"Backup script is finished. Took {end_time - main_start_time}")
