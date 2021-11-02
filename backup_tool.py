@@ -163,7 +163,7 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
         indicator which compression method should be used
     """
     for item in items:
-        print(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
+        print(f"\tProcessing backup for item <{item}> from src ({src}) to dst ({dst})")
         logger.debug(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
         src_item = os.path.join(src, item)
         dst_item = os.path.join(dst, item)
@@ -220,6 +220,26 @@ def get_dir_size(path: str):
         raise Exception("Should not be reached!!")
 
     return total_size
+
+
+def get_size_and_sort_ascending_order(path: str, items_list: list):
+    # ToDo: Docstring missing here
+    sorted_items = []
+    items_w_sizes = []
+
+    for item in items_list:
+        item_path = os.path.join(path, item)
+        size = get_dir_size(item_path)
+        items_w_sizes.append((item, size))
+
+    items_w_sizes.sort(key=lambda x: x[1])
+
+    for item in items_w_sizes:
+        sorted_items.append(item[0])
+
+    # print(sorted_items)
+    # print(items_w_sizes)
+    return sorted_items, items_w_sizes
 
 
 def build_checksum_of_directory(dir: str, ex_files: list = [], ex_ext: list = [], hash_func: str = 'sha256'):
@@ -304,7 +324,9 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
         adjusted collection of information about backup process
     """
     items_info = []
-    for item in items:
+    for item_w_size in items:
+        item = item_w_size[0]
+        size = item_w_size[1]
         logger.debug(f"Append info_dict for {prefix} <{item}>")
         if prefix == "file":
             hash = build_hash_of_file(filepath=os.path.join(src, item), hash_func="md5")
@@ -315,7 +337,7 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
 
         item_info = {
             f"{prefix}_name": item,
-            f"{prefix}_size_in_bytes": get_dir_size(path=os.path.join(src, item)),
+            f"{prefix}_size_in_bytes": size,
             f"{prefix}_hash": hash
             }
         items_info.append(item_info)
@@ -354,20 +376,18 @@ def perform_backup(src: str, dst: str):
 
     if len(files) > 0:
         logger.debug("Start building info_dict for files and then backup them")
-        # ToDo: Move size calculation to one central place and pass information to only calculate size once!
-        files.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
-        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=files, prefix="file")
+        files_sorted, files_with_sizes = get_size_and_sort_ascending_order(path=src, items_list=files)
+        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=files_with_sizes, prefix="file")
 
-        backup_items_from_src_to_dst(src=src, dst=dst, items=files)
+        backup_items_from_src_to_dst(src=src, dst=dst, items=files_sorted)
 
     if len(folders) > 0:
         logger.debug("Start building info_dict for folders and then backup them")
-        # ToDo: Move size calculation to one central place and pass information to only calculate size once!
-        folders.sort(key=lambda f: get_dir_size(path=os.path.join(src, f)), reverse=False)  # sort from small to big
-        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=folders, prefix="folder")
+        folders_sorted, folders_with_sizes = get_size_and_sort_ascending_order(path=src, items_list=folders)
+        info_dict = update_info_dict_with_items(inf_dict=info_dict, src=src, items=folders_with_sizes, prefix="folder")
 
-        # backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="ZIPFILE")
-        backup_items_from_src_to_dst(src=src, dst=dst, items=folders, compression="shutil.make_archive")
+        # backup_items_from_src_to_dst(src=src, dst=dst, items=folders_sorted, compression="ZIPFILE")
+        backup_items_from_src_to_dst(src=src, dst=dst, items=folders_sorted, compression="shutil.make_archive")
 
     # write information to dst folder
     logger.debug("Start writing backup info_dict to disk")
@@ -523,6 +543,8 @@ def main():
             activation = bool(row["activate"])
             if activation is True:
                 logger.debug(f"Value for activation: {activation}. Do the backup")
+                print(f"\n\nPerform backup instructions for row {idx} now.\n")
+
                 latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
 
                 source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
@@ -537,6 +559,7 @@ def main():
 
     end_time = datetime.now()
     logger.debug(f"Backup script is finished. Took {end_time - main_start_time}")
+    print(f"\nBackup script is finished. Took {end_time - main_start_time}")
     check_for_shutdown(instr=backup_instr_pd)
 
 
