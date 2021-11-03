@@ -223,7 +223,23 @@ def get_dir_size(path: str):
 
 
 def get_size_and_sort_ascending_order(path: str, items_list: list):
-    # ToDo: Docstring missing here
+    """
+    Calculates size of given directories/files list and sorts them in ascending order.
+
+    Parameters
+    ----------
+    path: str
+        Path to given files/directories
+    items_list: list
+        list of directories/files
+
+    Returns
+    -------
+    sorted_items: list
+        sorted list of directories/files
+    items_w_sizes: list
+        sorted list of tuples with item_name and size in bytes
+    """
     sorted_items = []
     items_w_sizes = []
 
@@ -237,8 +253,6 @@ def get_size_and_sort_ascending_order(path: str, items_list: list):
     for item in items_w_sizes:
         sorted_items.append(item[0])
 
-    # print(sorted_items)
-    # print(items_w_sizes)
     return sorted_items, items_w_sizes
 
 
