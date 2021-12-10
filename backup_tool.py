@@ -413,6 +413,45 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Backup info_dict written to {file_name}")
 
 
+def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_dict: dict):
+    """
+    Loops the given source path and collects information about its files and folders. Performs full or partial backup
+    and writes an information file about the backup.
+
+    Parameters
+    ----------
+    src_path: str
+        path to source directory of backup
+    dst_path: str
+        path to destination directory of backup
+    strategy: str
+        indicator how the backup should be performed. full vs partly
+    last_backup_dict: dict
+        information about last backup to be able to compare with current status
+
+    Returns
+    -------
+    No returns
+    """
+    # log inputs parameters
+    logger.debug(f"Input check - src_path: {src_path}")
+    logger.debug(f"Input check - dst_path: {dst_path}")
+    logger.debug(f"Input check - strategy: {strategy}")
+    logger.debug(f"Input check - last_backup_dict: {last_backup_dict}")
+
+    # collect content of source
+
+    # get size of items and sort by size in ascending order
+
+    # loop items
+    # calculate hash of item
+    # if strategy is full perform backup
+    # if strategy is partly check for changes, if yes perform backup
+    # write information to dict for backup of this item
+
+    # write information dict to dst
+
+
 def load_info_dict_from_backup_folder(folder_path: str):
     """
     Returns loaded dict file with constant file name from given path
@@ -555,11 +594,14 @@ def main():
                 logger.debug(f"Processing idx: {idx} with values: Header: {header}; Value: {row[header]}")
 
             activation = bool(row["activate"])
+            strategy = row["strategy"]
+            latest_info_dict = None
             if activation is True:
                 logger.debug(f"Value for activation: {activation}. Do the backup")
                 print(f"\n\nPerform backup instructions for row {idx} now.\n")
 
-                latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
+                if strategy == "partly":
+                    latest_info_dict = analyze_existing_backups(backup_path=row["destination"], max_num_backups=3)
 
                 source, destination = check_and_setup_directories(index=idx, src=row["source"], dst=row["destination"])
 
@@ -567,6 +609,9 @@ def main():
                     continue
                 else:
                     perform_backup(src=source, dst=destination)
+
+                    # perform_backup_v2(src_path=source, dst_path=destination, strategy=strategy,
+                    #                   last_backup_dict=latest_info_dict)
 
             else:
                 logger.debug(f"Value for activation: {activation}. Skip this row from backup instructions.")
