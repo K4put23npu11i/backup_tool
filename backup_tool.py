@@ -465,7 +465,26 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
     logger.debug(f"Sort Result with sizes: {dir_content_w_sizes}")
 
     # loop items
-    # calculate hash of item
+    backup_files, backup_folders = [], []
+    for item, item_size in dir_content_w_sizes:
+        logger.debug(f"Processing backup for item: {item}")
+        logger.debug(f"item_size: {item_size}")
+        if item in files:
+            item_type = "file"
+        else:
+            item_type = "folder"
+        logger.debug(f"item_type: {item_type}")
+
+        # calculate hash of item
+        if item_type == "file":
+            item_hash = build_hash_of_file(filepath=os.path.join(src_path, item), hash_func="md5")
+        elif item_type == "folder":
+            item_hash = build_checksum_of_directory(dir=os.path.join(src_path, item), hash_func='md5')
+        else:
+            item_hash = None
+            logger.error(f"Given item_type is not supported! Given: {item_type}")
+        logger.debug(f"item_hash: {item_hash}")
+
     # if strategy is full perform backup
     # if strategy is partly check for changes, if yes perform backup
     # write information to dict for backup of this item
