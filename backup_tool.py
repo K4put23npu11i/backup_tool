@@ -44,6 +44,7 @@ logger.setLevel(logging.DEBUG)
 
 instructions_filename = "backup_instruction.csv"
 instructions_foldername = "data"
+DATETIME_STR_FORMAT = "%Y%m%d_%H%M%S"
 
 
 def read_backup_instructions(path: str, file: str):
@@ -439,17 +440,35 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
     logger.debug(f"Input check - strategy: {strategy}")
     logger.debug(f"Input check - last_backup_dict: {last_backup_dict}")
 
+    backup_start_time = datetime.now()
+    backup_info_dict = {
+        "backup_start_time": backup_start_time.strftime(DATETIME_STR_FORMAT),
+        "backup_end_time": "",
+        "backup_duration": ""
+    }
+
     # collect content of source
 
     # get size of items and sort by size in ascending order
-
+    import time
+    time.sleep(5)
     # loop items
     # calculate hash of item
     # if strategy is full perform backup
     # if strategy is partly check for changes, if yes perform backup
     # write information to dict for backup of this item
 
-    # write information dict to dst
+    # set endtime and write information dict to dst
+    backup_end_time = datetime.now()
+    backup_info_dict["backup_end_time"] = backup_end_time.strftime(DATETIME_STR_FORMAT)
+    backup_info_dict["backup_duration"] = str(backup_end_time - backup_start_time)
+
+    logger.debug("Start writing backup info_dict to disk")
+    file_content_txt = json.dumps(backup_info_dict, indent=4)
+    file_name = f"{datetime.now().strftime(DATETIME_STR_FORMAT)}_backup_information.txt"
+    with open(os.path.join(dst_path, file_name), "w") as file:
+        file.write(file_content_txt)
+    logger.debug(f"Backup info_dict written to {file_name}")
 
 
 def load_info_dict_from_backup_folder(folder_path: str):
@@ -608,10 +627,10 @@ def main():
                 if source is None or destination is None:
                     continue
                 else:
-                    perform_backup(src=source, dst=destination)
+                    # perform_backup(src=source, dst=destination)
 
-                    # perform_backup_v2(src_path=source, dst_path=destination, strategy=strategy,
-                    #                   last_backup_dict=latest_info_dict)
+                    perform_backup_v2(src_path=source, dst_path=destination, strategy=strategy,
+                                      last_backup_dict=latest_info_dict)
 
             else:
                 logger.debug(f"Value for activation: {activation}. Skip this row from backup instructions.")
