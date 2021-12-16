@@ -448,6 +448,16 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
     }
 
     # collect content of source
+    dir_content = os.listdir(src_path)
+
+    files, folders = [], []
+    for content in dir_content:
+        if os.path.isfile(os.path.join(src_path, content)):
+            files.append(content)
+        if os.path.isdir(os.path.join(src_path, content)):
+            folders.append(content)
+    logger.debug(f"Found {len(files)} files in total in src: {files}")
+    logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     # get size of items and sort by size in ascending order
     import time
