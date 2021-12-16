@@ -460,8 +460,10 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
     logger.debug(f"Found {len(folders)} folders in total in src: {folders}")
 
     # get size of items and sort by size in ascending order
-    import time
-    time.sleep(5)
+    sorted_dir_content, dir_content_w_sizes = get_size_and_sort_ascending_order(path=src_path, items_list=dir_content)
+    logger.debug(f"Sorting results in: {sorted_dir_content}")
+    logger.debug(f"Sort Result with sizes: {dir_content_w_sizes}")
+
     # loop items
     # calculate hash of item
     # if strategy is full perform backup
