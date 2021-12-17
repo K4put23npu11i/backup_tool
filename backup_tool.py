@@ -417,8 +417,52 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Backup info_dict written to {file_name}")
 
 
-def check_config_for_partly_update():
-    return False
+def check_config_for_partly_update(item_hash: str, item_type: str, last_config: dict):
+    """
+    Compares the item hash with the hashes from the last backup. A match means the item does not need to be updated.
+
+    Parameters
+    ----------
+    item_hash: str
+        hash of item to be checked
+    item_type: str
+        indicator for type of item (file or folder)
+    last_config: dict
+        info dict about last backup to be checked against
+
+    Returns
+    -------
+    do_backup: bool
+        Indicator for match with previous backups. True: No match, backup needed, False: Match, No backup needed
+    """
+    # log inputs parameters
+    logger.debug(f"Input check - item_hash: {item_hash}")
+    logger.debug(f"Input check - item_type: {item_type}")
+    logger.debug(f"Input check - last_config: {last_config}")
+
+    do_backup = True
+    item_list = None
+
+    # get all stored items from last config
+    if last_config is not None:
+        if item_type == "file":
+            item_list = last_config.get("found_files")
+        elif item_type == "folder":
+            item_list = last_config.get("found_folders")
+        else:
+            item_list = None
+            logger.error(f"Given item_type is not supported! Given: {item_type}")
+
+    if item_list is not None:
+        for item_dict in item_list:
+            backup_hash = item_dict["item_hash"]
+
+            if backup_hash == item_hash:
+                do_backup = False
+                break
+
+    logger.debug(f"Return value - do_backup: {do_backup}")
+    return do_backup
 
 
 def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_dict: dict):
@@ -498,7 +542,8 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
         if strategy == "full":
             do_backup = True
         elif strategy == "partly":
-            do_backup = check_config_for_partly_update()
+            do_backup = check_config_for_partly_update(item_hash=item_hash, item_type=item_type,
+                                                       last_config=last_backup_dict)
         else:
             do_backup = False
             logger.error(f"Given strategy ('{strategy}') is not supported!")
