@@ -417,6 +417,10 @@ def perform_backup(src: str, dst: str):
     logger.debug(f"Backup info_dict written to {file_name}")
 
 
+def check_config_for_partly_update():
+    return False
+
+
 def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_dict: dict):
     """
     Loops the given source path and collects information about its files and folders. Performs full or partial backup
@@ -491,28 +495,35 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
         logger.debug(f"item_hash: {item_hash}")
 
         # if strategy is full perform backup
-        # if strategy is partly check for changes, if yes perform backup
+        if strategy == "full":
+            do_backup = True
+        elif strategy == "partly":
+            do_backup = check_config_for_partly_update()
+        else:
+            do_backup = False
+            logger.error(f"Given strategy ('{strategy}') is not supported!")
 
         # perform backup
-        backup_time = backup_items_from_src_to_dst(src=src_path, dst=dst_path, items=[item],
-                                                   compression="shutil.make_archive")
-        logger.debug(f"Overall backup time for item {item} took: {str(backup_time)}")
+        if do_backup is True:
+            backup_time = backup_items_from_src_to_dst(src=src_path, dst=dst_path, items=[item],
+                                                       compression="shutil.make_archive")
+            logger.debug(f"Overall backup time for item {item} took: {str(backup_time)}")
 
-        # write information to dict for backup of this item
-        item_dict = {
-            "item_name": item,
-            "item_type": item_type,
-            "item_hash": item_hash,
-            "item_size": item_size,
-            "backup_time": str(backup_time)
-        }
+            # write information to dict for backup of this item
+            item_dict = {
+                "item_name": item,
+                "item_type": item_type,
+                "item_hash": item_hash,
+                "item_size": item_size,
+                "backup_time": str(backup_time)
+            }
 
-        if item_type == "file":
-            backup_files.append(item_dict)
-        elif item_type == "folder":
-            backup_folders.append(item_dict)
-        else:
-            logger.error(f"Given item_type is not supported! Given: {item_type}")
+            if item_type == "file":
+                backup_files.append(item_dict)
+            elif item_type == "folder":
+                backup_folders.append(item_dict)
+            else:
+                logger.error(f"Given item_type is not supported! Given: {item_type}")
 
     # Add lists, set endtime and write information dict to dst
     backup_info_dict["found_files"] = backup_files
