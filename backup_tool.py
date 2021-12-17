@@ -364,6 +364,41 @@ def update_info_dict_with_items(inf_dict: dict, src: str, items: list, prefix: s
     return inf_dict
 
 
+def write_info_dict_to_filesystem(path: str, content: dict):
+    # log inputs parameters
+    logger.debug(f"Input check - path: {path}")
+    logger.debug(f"Input check - content: {content}")
+
+    # write information to dst folder
+    logger.debug("Start writing backup info_dict to disk")
+
+    if isinstance(content, dict):
+        content_str = json.dumps(content, indent=4)
+    else:
+        content_str = str(content)
+
+    name = f"{datetime.now().strftime(DATETIME_STR_FORMAT)}_backup_information.txt"
+    filepath = os.path.join(path, name)
+
+    with open(filepath, "w") as file:
+        file.write(content_str)
+
+    logger.debug(f"File writen to disk ({filepath})")
+
+    all_files = os.listdir(path)
+    match_files = []
+    for file in all_files:
+        if "_backup_information.txt" in file:
+            match_files.append(file)
+
+    sorted_match_files = sorted(match_files)
+    while len(sorted_match_files) > 1:
+        file_to_delete = sorted_match_files.pop(0)
+        path_to_delete = os.path.join(path, file_to_delete)
+        logger.debug(f"Remove: {path_to_delete}")
+        os.remove(path_to_delete)
+
+
 def perform_backup(src: str, dst: str):
     """
     Performs a backup from src directory to destination directory. Collection of function calls
@@ -570,19 +605,17 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
             else:
                 logger.error(f"Given item_type is not supported! Given: {item_type}")
 
-    # Add lists, set endtime and write information dict to dst
-    backup_info_dict["found_files"] = backup_files
-    backup_info_dict["found_folders"] = backup_folders
+            backup_info_dict["found_files"] = backup_files
+            backup_info_dict["found_folders"] = backup_folders
+            write_info_dict_to_filesystem(path=dst_path, content=backup_info_dict)
+
+    # Set endtime and write information dict to dst
     backup_end_time = datetime.now()
     backup_info_dict["backup_end_time"] = backup_end_time.strftime(DATETIME_STR_FORMAT)
     backup_info_dict["backup_duration"] = str(backup_end_time - backup_start_time)
 
-    logger.debug("Start writing backup info_dict to disk")
-    file_content_txt = json.dumps(backup_info_dict, indent=4)
-    file_name = f"{datetime.now().strftime(DATETIME_STR_FORMAT)}_backup_information.txt"
-    with open(os.path.join(dst_path, file_name), "w") as file:
-        file.write(file_content_txt)
-    logger.debug(f"Backup info_dict written to {file_name}")
+    write_info_dict_to_filesystem(path=dst_path, content=backup_info_dict)
+    logger.debug("End of 'perform_backup_v2'")
 
 
 def load_info_dict_from_backup_folder(folder_path: str):
