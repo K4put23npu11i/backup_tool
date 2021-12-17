@@ -163,6 +163,7 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
     compression: str
         indicator which compression method should be used
     """
+    overall_starttime = datetime.now()
     for item in items:
         print(f"\tProcessing backup for item <{item}> from src ({src}) to dst ({dst})")
         logger.debug(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
@@ -188,6 +189,8 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
         else:
             logger.error(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
             raise Exception(f"src_item ({src_item}) is not file nor folder! PROBLEM!!")
+    overall_endtime = datetime.now()
+    return overall_endtime - overall_starttime
 
 
 def get_dir_size(path: str):
@@ -444,7 +447,9 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
     backup_info_dict = {
         "backup_start_time": backup_start_time.strftime(DATETIME_STR_FORMAT),
         "backup_end_time": "",
-        "backup_duration": ""
+        "backup_duration": "",
+        "found_files": [],
+        "found_folders": []
     }
 
     # collect content of source
@@ -485,11 +490,33 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
             logger.error(f"Given item_type is not supported! Given: {item_type}")
         logger.debug(f"item_hash: {item_hash}")
 
-    # if strategy is full perform backup
-    # if strategy is partly check for changes, if yes perform backup
-    # write information to dict for backup of this item
+        # if strategy is full perform backup
+        # if strategy is partly check for changes, if yes perform backup
 
-    # set endtime and write information dict to dst
+        # perform backup
+        backup_time = backup_items_from_src_to_dst(src=src_path, dst=dst_path, items=[item],
+                                                   compression="shutil.make_archive")
+        logger.debug(f"Overall backup time for item {item} took: {str(backup_time)}")
+
+        # write information to dict for backup of this item
+        item_dict = {
+            "item_name": item,
+            "item_type": item_type,
+            "item_hash": item_hash,
+            "item_size": item_size,
+            "backup_time": str(backup_time)
+        }
+
+        if item_type == "file":
+            backup_files.append(item_dict)
+        elif item_type == "folder":
+            backup_folders.append(item_dict)
+        else:
+            logger.error(f"Given item_type is not supported! Given: {item_type}")
+
+    # Add lists, set endtime and write information dict to dst
+    backup_info_dict["found_files"] = backup_files
+    backup_info_dict["found_folders"] = backup_folders
     backup_end_time = datetime.now()
     backup_info_dict["backup_end_time"] = backup_end_time.strftime(DATETIME_STR_FORMAT)
     backup_info_dict["backup_duration"] = str(backup_end_time - backup_start_time)
