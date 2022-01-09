@@ -14,10 +14,7 @@ from datetime import datetime
 import time
 import json
 import zipfile
-import gzip
 from checksumdir import dirhash
-import hashlib
-import restore_test_data_to_original_state
 
 # Configure logging
 logger = logging.getLogger()
@@ -165,7 +162,7 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
     """
     overall_starttime = datetime.now()
     for item in items:
-        print(f"\tProcessing backup for item <{item}> from src ({src}) to dst ({dst})")
+        # print(f"\tProcessing backup for item <{item}> from src ({src}) to dst ({dst})")
         logger.debug(f"Processing backup for item <{item}> from src ({src}) to dst ({dst})")
         src_item = os.path.join(src, item)
         dst_item = os.path.join(dst, item)
@@ -176,13 +173,13 @@ def backup_items_from_src_to_dst(src: str, dst: str, items: list, compression: s
             logger.debug(f"Backup file <{item}> from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
         elif os.path.isdir(src_item):
             if compression == "ZIPFILE":
-                logger.debug(f"Copy and compress with ZIP")
+                logger.debug("Copy and compress with ZIP")
                 backup_folder_with_zipfile_method(src=src_item, dst=dst_item)
             elif compression == "shutil.make_archive":
-                logger.debug(f"Copy and compress with shutil.make_archive")
+                logger.debug("Copy and compress with shutil.make_archive")
                 shutil.make_archive(dst_item, "zip", src_item)
             else:
-                logger.debug(f"Copy with NO compression")
+                logger.debug("Copy with NO compression")
                 shutil.copytree(src_item, dst_item)
             done_time = datetime.now()
             logger.debug(f"Backup folder <{item}> from src ({src}) to dst ({dst}) done. Took {done_time - start_time}")
@@ -554,9 +551,17 @@ def perform_backup_v2(src_path: str, dst_path: str, strategy: str, last_backup_d
 
     # loop items
     backup_files, backup_folders = [], []
-    for item, item_size in dir_content_w_sizes:
+    length_items = len(dir_content_w_sizes)
+    for idx, item_props in enumerate(dir_content_w_sizes):
+        item = item_props[0]
+        item_size = item_props[1]
         logger.debug(f"Processing backup for item: {item}")
         logger.debug(f"item_size: {item_size}")
+        
+        print(f"\n\tProcessing item {idx+1} of {length_items}.")
+        print(f"\t\tItem: {item}")
+        print(f"\t\tStart time: {datetime.now()}")
+        
         if item in files:
             item_type = "file"
         else:
